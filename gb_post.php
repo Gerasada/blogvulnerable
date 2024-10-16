@@ -4,13 +4,22 @@ session_start();
 
 include 'koneksi.php';
 
-$nama = $_POST['nama'];
-$pesan = $_POST['pesan'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Validasi dan sanitasi input pengguna
+    $nama = htmlspecialchars(trim($_POST['nama']), ENT_QUOTES, 'UTF-8');
+    $pesan = htmlspecialchars(trim($_POST['pesan']), ENT_QUOTES, 'UTF-8');
 
-$insert = mysqli_query($conn, "INSERT INTO guestbook (id, tanggal, nama, pesan) VALUES(NULL, NOW(), '{$nama}', '{$pesan}')");
+    // Menggunakan prepared statement untuk menghindari SQL Injection
+    $stmt = $conn->prepare("INSERT INTO guestbook (id, tanggal, nama, pesan) VALUES (NULL, NOW(), ?, ?)");
+    $stmt->bind_param("ss", $nama, $pesan); // "ss" menunjukkan dua parameter string
 
-if ($insert) {
-	echo "Pesan Anda sudah disimpan.";
+    if ($stmt->execute()) {
+        echo "Pesan Anda sudah disimpan.";
+    } else {
+        echo "Terjadi kesalahan, silakan coba lagi.";
+    }
+
+    $stmt->close();
+    $conn->close();
 }
-
-
+?>
