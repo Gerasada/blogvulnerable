@@ -1,10 +1,11 @@
 <?php
-
 session_start();
-
 include 'koneksi.php';
 
-$pesan = mysqli_query($conn, "SELECT * FROM guestbook ORDER BY tanggal");
+// Menggunakan prepared statement untuk menghindari SQL Injection
+$pesan_query = $conn->prepare("SELECT * FROM guestbook ORDER BY tanggal");
+$pesan_query->execute();
+$pesan = $pesan_query->get_result();
 
 ?><!DOCTYPE html>
 <html lang="en">
@@ -33,12 +34,15 @@ $pesan = mysqli_query($conn, "SELECT * FROM guestbook ORDER BY tanggal");
 	
 	<?php
 	
-	while($row = mysqli_fetch_array($pesan)) {
-	
-		echo "<small>Oleh <b>{$row['nama']}</b> pada {$row['tanggal']}</small>";
-		echo "<p>{$row['pesan']}</p>";
-		echo "<hr>";
+	while($row = $pesan->fetch_assoc()) {
+		// Menghindari XSS dengan htmlspecialchars
+		$nama = htmlspecialchars($row['nama'], ENT_QUOTES, 'UTF-8');
+		$pesan_text = htmlspecialchars($row['pesan'], ENT_QUOTES, 'UTF-8');
+		$tanggal = htmlspecialchars($row['tanggal'], ENT_QUOTES, 'UTF-8');
 		
+		echo "<small>Oleh <b>{$nama}</b> pada {$tanggal}</small>";
+		echo "<p>{$pesan_text}</p>";
+		echo "<hr>";
 	}
 	
 	?>
@@ -46,13 +50,11 @@ $pesan = mysqli_query($conn, "SELECT * FROM guestbook ORDER BY tanggal");
 	<h3>Kirim pesan</h3>
 	
 	<form action="gb_post.php" method="post">
-	
-		Nama: <input type="text" name="nama"><br>
+		Nama: <input type="text" name="nama" required><br>
 		Pesan: <br>
-		<textarea name="pesan" cols="40" rows="5"></textarea>
+		<textarea name="pesan" cols="40" rows="5" required></textarea>
 		<br>
 		<input type="submit" value="Kirim">
-	
 	</form>
 	
 </body>
