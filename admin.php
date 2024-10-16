@@ -2,9 +2,24 @@
 
 session_start();
 
-if (!$_SESSION['admin']) {
+// Cek apakah user sudah login dan merupakan admin
+if (!isset($_SESSION['admin']) || $_SESSION['admin'] !== 1) {
 	header("Location: admin_login.php");
+	exit;
 }
+
+// Batasi waktu sesi agar expired setelah periode inaktivitas
+$timeout_duration = 1800; // 30 menit
+
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY']) > $timeout_duration) {
+    // Jika sesi sudah terlalu lama tidak aktif, lakukan logout
+    session_unset();     
+    session_destroy();   
+    header("Location: admin_login.php");
+    exit;
+}
+
+$_SESSION['LAST_ACTIVITY'] = time(); // Perbarui waktu aktivitas terakhir
 
 ?><!DOCTYPE html>
 <html lang="en">
