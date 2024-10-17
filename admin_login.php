@@ -1,39 +1,31 @@
 <?php
 
 session_start();
-include 'koneksi.php'; // pastikan koneksi.php berisi koneksi yang aman
+include 'koneksi.php';
 
 if (isset($_POST['submit'])) {
-    // Mengambil dan membersihkan input
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
+
+    $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Prepared statement untuk menghindari SQL Injection
-    $stmt = $conn->prepare("SELECT * FROM user WHERE username = ?");
-    $stmt->bind_param("s", $username);
+    $stmt = $conn->prepare("SELECT * FROM user WHERE username = ? AND password = ?");
+    $stmt->bind_param("ss", $username, $password);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Cek apakah pengguna ada
-    if ($result->num_rows == 1) {
-        $user = $result->fetch_assoc();
-
-        // Verifikasi password
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['admin'] = 1;
-            header("Location: admin.php");
-            exit();
-        } else {
-            die("Password salah!");
-        }
+    if ($result->num_rows == 0) {
+        die("Username atau password salah!");
     } else {
-        die("Username tidak ditemukan!");
+        $_SESSION['admin'] = 1;
+        header("Location: admin.php");
     }
 
     $stmt->close();
-    $conn->close();
 }
-?><!DOCTYPE html>
+
+?>
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -49,10 +41,10 @@ if (isset($_POST['submit'])) {
     <form action="" method="post">
 
         <p>Username:</p>
-        <input type="text" name="username" required>
+        <input type="text" name="username">
 
         <p>Password:</p>
-        <input type="password" name="password" required>
+        <input type="password" name="password">
 
         <br>
         <br>
